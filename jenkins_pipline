@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = "us-east-1"
+        TF_VERSION = "1.9.5"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/yasmeentamer/TeamAvailabilityTest.git'
+            }
+        }
+
+        stage('Install Terraform') {
+            steps {
+                sh """
+                  if ! terraform -version | grep ${TF_VERSION}; then
+                    curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip
+                    unzip terraform.zip
+                    sudo mv terraform /usr/local/bin/
+                    rm terraform.zip
+                  fi
+                """
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir('terraform-project') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform-project') {
+                    sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                dir('terraform-project') {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+
+        stage('Show Outputs') {
+            steps {
+                dir('terraform-project') {
+                    sh 'terraform output'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "✅ Pipeline finished."
+        }
+        failure {
+            echo "❌ Pipeline failed."
+        }
+    }
+}

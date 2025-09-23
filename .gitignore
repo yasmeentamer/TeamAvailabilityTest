@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log
+*.log
+
+# environment
+.env
+
+# build outputs
+dist/
+build/
+.terraform/
+.terraform/
